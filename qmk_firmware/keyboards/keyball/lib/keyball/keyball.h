@@ -114,6 +114,8 @@ enum keyball_keycodes {
     AML_TO   = QK_KB_10, // Toggle automatic mouse layer
     AML_I50  = QK_KB_11, // Increment automatic mouse layer timeout
     AML_D50  = QK_KB_12, // Decrement automatic mouse layer timeout
+    AMT_I1   = QK_KB_16, // Increment automatic mouse layer threshold
+    AMT_D1   = QK_KB_17, // Decrement automatic mouse layer threshold
 
     // User customizable 32 keycodes.
     KEYBALL_SAFE_RANGE = QK_USER_0,
@@ -127,6 +129,7 @@ typedef union {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
         uint8_t amle : 1;  // automatic mouse layer enabled
         uint16_t amlto : 5; // automatic mouse layer timeout
+        uint8_t amlth : 7; // automatic mouse layer threshold (+1, 0 means default)
 #endif
 #if KEYBALL_SCROLLSNAP_ENABLE == 2
         uint8_t ssnap : 2; // scroll snap mode
@@ -165,6 +168,9 @@ typedef struct {
     bool     scroll_mode;
     uint32_t scroll_mode_changed;
     uint8_t  scroll_div;
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    uint8_t auto_mouse_threshold;
+#endif
 
 #if KEYBALL_SCROLLSNAP_ENABLE == 1
     uint32_t scroll_snap_last;
@@ -254,6 +260,12 @@ uint8_t keyball_get_scroll_div(void);
 /// Valid values are between 1 and 7, KEYBALL_SCROLL_DIV_DEFAULT is used when 0
 /// is specified.
 void keyball_set_scroll_div(uint8_t div);
+
+/// keyball_get_auto_mouse_threshold gets current auto mouse activation threshold.
+uint8_t keyball_get_auto_mouse_threshold(void);
+
+/// keyball_set_auto_mouse_threshold changes the auto mouse activation threshold.
+void keyball_set_auto_mouse_threshold(uint8_t threshold);
 
 /// keyball_get_cpi gets current CPI of trackball.
 /// The actual CPI value is the returned value multiplied by 100:

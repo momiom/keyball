@@ -32,6 +32,12 @@ const uint8_t SCROLL_DIV_MAX = 7;
 const uint16_t AML_TIMEOUT_MIN = 100;
 const uint16_t AML_TIMEOUT_MAX = 1000;
 const uint16_t AML_TIMEOUT_QU  = 50;   // Quantization Unit
+#define AML_THRESHOLD_MAX 126
+#ifdef AUTO_MOUSE_THRESHOLD
+#    define AML_THRESHOLD_DEFAULT AUTO_MOUSE_THRESHOLD
+#else
+#    define AML_THRESHOLD_DEFAULT 10
+#endif
 
 static const char BL = '\xB0'; // Blank indicator character
 static const char LFSTR_ON[] PROGMEM = "\xB2\xB3";
@@ -50,6 +56,9 @@ keyball_t keyball = {
 
     .scroll_mode = false,
     .scroll_div  = 0,
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    .auto_mouse_threshold = AML_THRESHOLD_DEFAULT,
+#endif
 
     .pressing_keys = { BL, BL, BL, BL, BL, BL, 0 },
 };
@@ -84,6 +93,10 @@ static int16_t divmod16(int16_t *v, int16_t div) {
 // clip2int8 clips an integer fit into int8_t.
 static inline int8_t clip2int8(int16_t v) {
     return (v) < -127 ? -127 : (v) > 127 ? 127 : (int8_t)v;
+}
+
+static uint8_t abs8(int8_t v) {
+    return v < 0 ? (uint8_t)(-v) : (uint8_t)v;
 }
 
 #ifdef OLED_ENABLE
@@ -128,6 +141,16 @@ static void add_cpi(int8_t delta) {
 static void add_scroll_div(int8_t delta) {
     int8_t v = keyball_get_scroll_div() + delta;
     keyball_set_scroll_div(v < 1 ? 1 : v);
+}
+
+bool auto_mouse_activation(report_mouse_t mouse_report) {
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    uint8_t threshold = keyball_get_auto_mouse_threshold();
+    return mouse_report.buttons != 0 || abs8(mouse_report.x) > threshold || abs8(mouse_report.y) > threshold || abs8(mouse_report.h) > threshold ||
+           abs8(mouse_report.v) > threshold;
+#else
+    return mouse_report.buttons != 0 || mouse_report.x != 0 || mouse_report.y != 0 || mouse_report.h != 0 || mouse_report.v != 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -547,6 +570,22 @@ void keyball_set_scroll_div(uint8_t div) {
     keyball.scroll_div = div > SCROLL_DIV_MAX ? SCROLL_DIV_MAX : div;
 }
 
+uint8_t keyball_get_auto_mouse_threshold(void) {
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    return keyball.auto_mouse_threshold;
+#else
+    return 0;
+#endif
+}
+
+void keyball_set_auto_mouse_threshold(uint8_t threshold) {
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    keyball.auto_mouse_threshold = MIN(threshold, AML_THRESHOLD_MAX);
+#else
+    (void)threshold;
+#endif
+}
+
 uint8_t keyball_get_cpi(void) {
     return keyball.cpi_value == 0 ? CPI_DEFAULT : keyball.cpi_value;
 }
@@ -583,6 +622,7 @@ void keyboard_post_init_kb(void) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
         set_auto_mouse_enable(c.amle);
         set_auto_mouse_timeout(c.amlto == 0 ? AUTO_MOUSE_TIME : (c.amlto + 1) * AML_TIMEOUT_QU);
+        keyball_set_auto_mouse_threshold(c.amlth == 0 ? AML_THRESHOLD_DEFAULT : c.amlth - 1);
 #endif
 #if KEYBALL_SCROLLSNAP_ENABLE == 2
         keyball_set_scrollsnap_mode(c.ssnap);
@@ -679,6 +719,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
                 set_auto_mouse_enable(false);
                 set_auto_mouse_timeout(AUTO_MOUSE_TIME);
+                keyball_set_auto_mouse_threshold(AML_THRESHOLD_DEFAULT);
 #endif
                 break;
             case KBC_SAVE: {
@@ -688,6 +729,7 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
                     .amle  = get_auto_mouse_enable(),
                     .amlto = (get_auto_mouse_timeout() / AML_TIMEOUT_QU) - 1,
+                    .amlth = keyball_get_auto_mouse_threshold() + 1,
 #endif
 #if KEYBALL_SCROLLSNAP_ENABLE == 2
                     .ssnap = keyball_get_scrollsnap_mode(),
@@ -746,6 +788,12 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
                     uint16_t v = get_auto_mouse_timeout() - 50;
                     set_auto_mouse_timeout(MAX(v, AML_TIMEOUT_MIN));
                 }
+                break;
+            case AMT_I1:
+                keyball_set_auto_mouse_threshold(keyball_get_auto_mouse_threshold() + 1);
+                break;
+            case AMT_D1:
+                keyball_set_auto_mouse_threshold(keyball_get_auto_mouse_threshold() == 0 ? 0 : keyball_get_auto_mouse_threshold() - 1);
                 break;
 #endif
 

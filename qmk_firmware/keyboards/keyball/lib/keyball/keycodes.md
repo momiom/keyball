@@ -24,8 +24,10 @@
 | `SSNP_VRT` | `Kb 13`         | `0x7e0d` | Set scroll snap mode as vertical                                  |
 | `SSNP_HOR` | `Kb 14`         | `0x7e0e` | Set scroll snap mode as horizontal                                |
 | `SSNP_FRE` | `Kb 15`         | `0x7e0f` | Set scroll snap mode as disable (free scroll)                     |
+| `AMT_I1`   | `Kb 16`         | `0x7e10` | Increase automatic mouse layer threshold by 1                     |
+| `AMT_D1`   | `Kb 17`         | `0x7e11` | Decrease automatic mouse layer threshold by 1                     |
 
-[^1]: CPI, scroll divider, automatic mouse layer's enable/disable, and automatic mouse layer's timeout.
+[^1]: CPI, scroll divider, automatic mouse layer's enable/disable, automatic mouse layer's timeout, and automatic mouse layer's threshold.
 
 <a id="japanese"></a>
 ## 特殊キーコード
@@ -48,5 +50,7 @@
 | `SSNP_VRT` | `Kb 13`         | `0x7e0d` | スクロールスナップモードを垂直にする                              |
 | `SSNP_HOR` | `Kb 14`         | `0x7e0e` | スクロールスナップモードを水平にする                              |
 | `SSNP_FRE` | `Kb 15`         | `0x7e0f` | スクロールスナップモードを無効にする(自由スクロール)              |
+| `AMT_I1`   | `Kb 16`         | `0x7e10` | 自動マウスレイヤーのしきい値を1増やします                         |
+| `AMT_D1`   | `Kb 17`         | `0x7e11` | 自動マウスレイヤーのしきい値を1減らします                         |
 
-[^2]: CPI、スクロール除数、自動マウスレイヤーのON/OFF状態、及び自動マウスレイヤのタイムアウト
+[^2]: CPI、スクロール除数、自動マウスレイヤーのON/OFF状態、自動マウスレイヤのタイムアウト、及び自動マウスレイヤーのしきい値
