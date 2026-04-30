@@ -691,6 +691,15 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
         keycode &= 0xff;
     }
 
+#ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
+    // 修飾キー押下で auto mouse layer を即座に解除する
+    if (record->event.pressed && get_auto_mouse_enable() && layer_state_is(get_auto_mouse_layer())) {
+        if (IS_MODIFIER_KEYCODE(keycode) || (keycode >= QK_MOD_TAP && keycode <= QK_MOD_TAP_MAX)) {
+            auto_mouse_layer_off();
+        }
+    }
+#endif
+
     switch (keycode) {
 #ifndef MOUSEKEY_ENABLE
         // process KC_MS_BTN1~8 by myself
