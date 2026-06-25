@@ -692,9 +692,21 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
     }
 
 #ifdef POINTING_DEVICE_AUTO_MOUSE_ENABLE
-    // 修飾キー押下で auto mouse layer を即座に解除する
+    // 修飾キーまたはレイヤー切替系キー押下で auto mouse layer を即座に解除する。
+    // 解除しないと auto mouse layer と切替先レイヤーが重なり、上位レイヤーである
+    // auto mouse layer のキー定義が優先されてしまうため。
     if (record->event.pressed && get_auto_mouse_enable() && layer_state_is(get_auto_mouse_layer())) {
-        if (IS_MODIFIER_KEYCODE(keycode) || (keycode >= QK_MOD_TAP && keycode <= QK_MOD_TAP_MAX)) {
+        bool is_modifier =
+            IS_MODIFIER_KEYCODE(keycode) ||
+            (keycode >= QK_MOD_TAP && keycode <= QK_MOD_TAP_MAX);
+        bool is_layer_switch =
+            (keycode >= QK_LAYER_TAP && keycode <= QK_LAYER_TAP_MAX) ||
+            (keycode >= QK_LAYER_MOD && keycode <= QK_LAYER_MOD_MAX) ||
+            (keycode >= QK_MOMENTARY && keycode <= QK_MOMENTARY_MAX) ||
+            (keycode >= QK_ONE_SHOT_LAYER && keycode <= QK_ONE_SHOT_LAYER_MAX) ||
+            (keycode >= QK_TO && keycode <= QK_TO_MAX) ||
+            (keycode >= QK_TOGGLE_LAYER && keycode <= QK_TOGGLE_LAYER_MAX);
+        if (is_modifier || is_layer_switch) {
             auto_mouse_layer_off();
         }
     }
